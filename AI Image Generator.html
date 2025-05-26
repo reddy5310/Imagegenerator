@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern AI Image Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* Light grayish-blue background */
+        }
+        .loader {
+            border: 5px solid #e2e8f0; /* Lighter border */
+            border-top: 5px solid #4f46e5; /* Indigo */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        textarea {
+            resize: vertical;
+        }
+        .api-key-input:focus {
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3); /* Indigo focus shadow */
+            border-color: #4f46e5;
+        }
+        /* Custom scrollbar for better aesthetics (optional) */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f0f2f5;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a0aec0;
+        }
+        .info-tooltip {
+            position: relative;
+            cursor: pointer;
+        }
+        .info-tooltip .tooltip-text {
+            visibility: hidden;
+            width: 220px;
+            background-color: #2d3748; /* Dark gray */
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%; /* Position above the icon */
+            left: 50%;
+            margin-left: -110px; /* Center the tooltip */
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.875rem;
+            line-height: 1.4;
+        }
+        .info-tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        .api-key-links-container {
+            margin-top: 0.75rem; /* Corresponds to mt-3 */
+            font-size: 0.75rem; /* Corresponds to text-xs */
+            color: #6b7280; /* Corresponds to text-gray-500 */
+        }
+        .api-key-links-container p {
+            margin-bottom: 0.25rem; /* Spacing between links */
+        }
+        .api-key-links-container a {
+            color: #4f46e5; /* Corresponds to text-indigo-500 */
+            text-decoration: underline;
+        }
+        .api-key-links-container a:hover {
+            color: #3730a3; /* Darker indigo on hover */
+        }
+
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6">
+    <div class="bg-white p-6 sm:p-8 rounded-xl shadow-2xl w-full max-w-3xl">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-indigo-600">Modern AI Image Generator</h1>
+            <p class="text-gray-600 mt-2 text-sm sm:text-base">Craft stunning visuals from your text prompts.</p>
+        </header>
+
+        <section id="apiKeySection" class="mb-8 p-6 bg-indigo-50 rounded-lg border border-indigo-200">
+            <div class="flex items-center justify-between mb-3">
+                <label for="apiKeyInput" class="block text-lg font-semibold text-indigo-700">Your API Key</label>
+                <div class="info-tooltip">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-indigo-500">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+                    </svg>
+                    <span class="tooltip-text">Enter an API key from a supported AI image generation service. This key is stored only in your browser's local storage. You are responsible for its usage.</span>
+                </div>
+            </div>
+            <input type="password" id="apiKeyInput" class="api-key-input block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none sm:text-sm mb-3" placeholder="Enter your AI Provider API Key here">
+            <div class="flex items-center justify-between">
+                <button id="saveApiKeyButton" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md text-sm transition duration-150 ease-in-out">Save Key</button>
+                <button id="clearApiKeyButton" class="text-indigo-600 hover:text-indigo-800 font-medium text-sm transition duration-150 ease-in-out">Clear Saved Key</button>
+            </div>
+            <div class="api-key-links-container">
+                <p class="font-medium text-gray-700">Get your API key from:</p>
+                <p>
+                    <strong class="text-indigo-600">Google AI Studio (for Imagen models):</strong>
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">Get Google AI Key</a>
+                    <span class="text-gray-500 text-xs block sm:inline sm:ml-1">(Ensure it's enabled for the Generative Language API, e.g., 'imagen-3.0-generate-002' model used by this tool by default).</span>
+                </p>
+                <p>
+                    <strong class="text-indigo-600">OpenAI (for DALL-E / ChatGPT Vision):</strong>
+                    <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">Get OpenAI API Key</a>
+                    <span class="text-gray-500 text-xs block sm:inline sm:ml-1">(Note: This tool currently uses Google's Imagen model. Adapting for OpenAI would require code changes.)</span>
+                </p>
+                <p>
+                    <strong class="text-indigo-600">Other Services:</strong>
+                    <span class="text-gray-500">If using a different image generation API, please refer to that provider's documentation for API key instructions.</span>
+                </p>
+            </div>
+        </section>
+
+        <section class="mb-8">
+            <label for="promptInput" class="block text-lg font-semibold text-gray-700 mb-2">Describe Your Image</label>
+            <textarea id="promptInput" name="promptInput" rows="5" class="block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., A majestic lion with a crown of stars, photorealistic, fantasy art"></textarea>
+            
+            <label for="negativePromptInput" class="block text-lg font-semibold text-gray-700 mt-4 mb-2">Things to Avoid (Negative Prompt)</label>
+            <textarea id="negativePromptInput" name="negativePromptInput" rows="2" class="block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., blurry, text, watermark, extra limbs"></textarea>
+        </section>
+
+        <button id="generateButton" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition duration-300 ease-in-out transform hover:scale-105 text-lg">
+            ✨ Generate Image
+        </button>
+
+        <section id="resultSection" class="mt-8 text-center">
+            <div id="loadingIndicator" class="loader mx-auto my-6 hidden"></div>
+            <p id="statusMessage" class="text-gray-600 my-4"></p>
+            <div id="imageContainer" class="mt-6 p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hidden min-h-[200px] flex flex-col items-center justify-center">
+                <img id="generatedImage" src="#" alt="Generated Image" class="max-w-full h-auto rounded-md shadow-md mx-auto hidden">
+                <p id="imagePlaceholderText" class="text-gray-400">Your generated image will appear here.</p>
+                <button id="downloadImageButton" class="mt-4 bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-5 rounded-md text-sm transition duration-150 ease-in-out hidden">
+                    Download Image
+                </button>
+            </div>
+        </section>
+
+        <section class="mt-12 pt-6 border-t border-gray-200 text-sm text-gray-500">
+            <h3 class="font-semibold text-gray-700 mb-2">How This Works:</h3>
+            <ul class="list-disc list-inside space-y-1 mb-4">
+                <li>Enter your API key from a supported AI image generation service (currently configured for Google's Imagen models).</li>
+                <li>Describe the image you want in the "Describe Your Image" box.</li>
+                <li>Optionally, add terms to avoid in the "Negative Prompt" box.</li>
+                <li>Click "Generate Image". Your browser directly communicates with the AI model using your key.</li>
+            </ul>
+            <h3 class="font-semibold text-gray-700 mb-2">Important Disclaimer:</h3>
+            <p>This tool facilitates image generation by making API calls directly from your browser to the AI service provider using the API key you provide. Your API key is stored in your browser's local storage only if you click "Save Key" and is not transmitted to or stored on any server associated with this page. You are solely responsible for all API usage and associated costs incurred on your Google Cloud account (or other AI service provider account). Please monitor your usage and understand the provider's pricing.</p>
+        </section>
+    </div>
+
+    <script>
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const saveApiKeyButton = document.getElementById('saveApiKeyButton');
+        const clearApiKeyButton = document.getElementById('clearApiKeyButton');
+        const promptInput = document.getElementById('promptInput');
+        const negativePromptInput = document.getElementById('negativePromptInput');
+        const generateButton = document.getElementById('generateButton');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const statusMessage = document.getElementById('statusMessage');
+        const imageContainer = document.getElementById('imageContainer');
+        const generatedImage = document.getElementById('generatedImage');
+        const imagePlaceholderText = document.getElementById('imagePlaceholderText');
+        const downloadImageButton = document.getElementById('downloadImageButton');
+
+        const API_KEY_STORAGE_KEY = 'aiImageGeneratorApiKey';
+
+        // Load saved API key
+        const loadApiKey = () => {
+            const savedKey = localStorage.getItem(API_KEY_STORAGE_KEY);
+            if (savedKey) {
+                apiKeyInput.value = savedKey;
+                statusMessage.textContent = 'Saved API Key loaded.';
+            }
+        };
+
+        saveApiKeyButton.addEventListener('click', () => {
+            const key = apiKeyInput.value.trim();
+            if (key) {
+                localStorage.setItem(API_KEY_STORAGE_KEY, key);
+                statusMessage.textContent = 'API Key saved locally in your browser.';
+            } else {
+                statusMessage.textContent = 'Please enter an API Key to save.';
+            }
+        });
+
+        clearApiKeyButton.addEventListener('click', () => {
+            localStorage.removeItem(API_KEY_STORAGE_KEY);
+            apiKeyInput.value = '';
+            statusMessage.textContent = 'Saved API Key cleared.';
+        });
+        
+        downloadImageButton.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.href = generatedImage.src;
+            link.download = `generated_image_${Date.now()}.png`; // Set a dynamic filename
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        generateButton.addEventListener('click', async () => {
+            const apiKey = apiKeyInput.value.trim();
+            let userPrompt = promptInput.value.trim();
+            const negativePrompt = negativePromptInput.value.trim(); // We get it, but current payload doesn't use it separately
+
+            if (!apiKey) {
+                statusMessage.textContent = 'Error: API Key is required. Please enter your API Key.';
+                apiKeyInput.focus();
+                return;
+            }
+            if (!userPrompt) {
+                statusMessage.textContent = 'Error: Please enter a prompt for the image.';
+                promptInput.focus();
+                return;
+            }
+
+            // For the current Google Imagen model, negative prompts are often included in the main prompt.
+            // Example: "A beautiful landscape --no buildings, ugly, blurry"
+            // If a specific 'negative_prompt' parameter becomes available for this endpoint, the payload should be adjusted.
+            let combinedPrompt = userPrompt;
+            if (negativePrompt) {
+                 // You might instruct users to use specific phrasing if the model doesn't have a dedicated negative prompt field.
+                 // For example: combinedPrompt += ` (avoiding: ${negativePrompt})`;
+                 // Or, if the model supports a common syntax like "--no":
+                 // combinedPrompt += ` --no ${negativePrompt}`;
+                 // For now, we'll assume the user incorporates negative aspects into the main prompt or we don't explicitly structure it.
+                 // The current payload only sends 'userPrompt' as 'prompt'.
+            }
+
+
+            generateButton.disabled = true;
+            generateButton.innerHTML = '<div class="loader inline-block mr-2"></div> Generating...';
+            loadingIndicator.classList.remove('hidden'); 
+            imageContainer.classList.remove('hidden');
+            generatedImage.classList.add('hidden');
+            imagePlaceholderText.textContent = 'AI is dreaming up your image... ✨';
+            downloadImageButton.classList.add('hidden');
+            statusMessage.textContent = '';
+
+
+            const payload = {
+                instances: [{ prompt: combinedPrompt }], // Using combinedPrompt if you decide to merge them
+                parameters: { 
+                    "sampleCount": 1
+                }
+            };
+            
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: response.statusText }));
+                    console.error('API Error Response:', errorData);
+                    let errorMessage = `API request failed: ${response.status}. `;
+                    if (errorData && errorData.error && errorData.error.message) {
+                        errorMessage += errorData.error.message;
+                    } else if (typeof errorData === 'string') {
+                        errorMessage += errorData;
+                    } else {
+                        errorMessage += "Please check your API key, model access, and prompt."
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                const result = await response.json();
+
+                if (result.predictions && result.predictions.length > 0 && result.predictions[0].bytesBase64Encoded) {
+                    const imageUrl = `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}`;
+                    generatedImage.src = imageUrl;
+                    generatedImage.classList.remove('hidden');
+                    imagePlaceholderText.classList.add('hidden');
+                    statusMessage.textContent = 'Image generated successfully!';
+                    downloadImageButton.classList.remove('hidden');
+                } else {
+                    console.error('Unexpected API response structure:', result);
+                    statusMessage.textContent = 'Failed: Unexpected response from server. No image data found.';
+                    imagePlaceholderText.textContent = 'Could not load image. Check console.';
+                    generatedImage.classList.add('hidden');
+                    imagePlaceholderText.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error generating image:', error);
+                statusMessage.textContent = `Error: ${error.message}`;
+                imagePlaceholderText.textContent = 'Image generation failed. See message above.';
+                generatedImage.classList.add('hidden');
+                imagePlaceholderText.classList.remove('hidden');
+
+            } finally {
+                generateButton.disabled = false;
+                generateButton.innerHTML = '✨ Generate Image';
+                loadingIndicator.classList.add('hidden');
+            }
+        });
+
+        // Initial load
+        loadApiKey();
+        if (!apiKeyInput.value) {
+            statusMessage.textContent = "Please enter and save your API Key to begin.";
+        }
+
+    </script>
+</body>
+</html>
